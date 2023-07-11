@@ -53,14 +53,14 @@ module.exports.likeCard = (req, res, next) => {
     { new: true })
     .then((card) => {
       if (!card) {
-        res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некоректные данные.' });
+        res.status(NOT_FOUND_ERROR).send({ message: 'Карточка не найдена' });
       } else {
         res.status(OK_STATUS).send(card);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(NOT_FOUND_ERROR).send({ message: 'Карточка не найдена' });
+        res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некоректные данные.' });
       } else {
         next();
       }
