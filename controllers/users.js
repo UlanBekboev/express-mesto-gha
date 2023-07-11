@@ -1,5 +1,6 @@
 const User = require('../models/users');
 const BadRequestError = require('../validationErrors/BadRequestError');
+const NotFoundError = require('../validationErrors/NotFoundError');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
@@ -13,26 +14,25 @@ module.exports.createUser = (req, res) => {
     });
 };
 
-module.exports.getUsers = (req, res) => {
+module.exports.getUsers = (req, res, next) => {
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch(() => {
-      res.status(404).send({ message: 'Пользователи не найдены' });
-    });
+    .catch(next);
 };
 
-module.exports.getUser = (req, res) => {
+module.exports.getUser = (req, res, next) => {
   const { id } = req.params;
 
   User.findById(id)
     .then((user) => {
-      res.send({ data: user });
+      if (!user) {
+        return next(new NotFoundError('Пользователь не найден'));
+      }
+      return res.status(200).send(user);
     })
-    .catch(() => {
-      res.status(404).send({ message: 'Пользователь не найден' });
-    });
+    .catch(next);
 };
 
 module.exports.updateAvatar = (req, res, next) => {
@@ -51,13 +51,15 @@ module.exports.updateAvatar = (req, res, next) => {
 
 module.exports.updateUser = (req, res, next) => {
   const { name, about } = req.body;
-  User.findByIdAndUpdate(req.user._id,
+  User.findByIdAndUpdate(
+    req.user._id,
     { name, about },
-    { new: true, runValidators: true })
+    { new: true, runValidators: true },
+  )
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Переданы неверные данные.'));
+        next(new BadRequestError('Неверный тип данных.'));
       }
       return next(err);
     });
