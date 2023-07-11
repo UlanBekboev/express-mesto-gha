@@ -1,16 +1,15 @@
-[![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
 # Проект Mesto фронтенд + бэкенд
-
-
-## Директории
-
-`/routes` — папка с файлами роутера  
-`/controllers` — папка с файлами контроллеров пользователя и карточки   
-`/models` — папка с файлами описания схем пользователя и карточки  
-  
-Остальные директории вспомогательные, создаются при необходимости разработчиком
-
+  Бэкенд для проекта Mesto.
+### Стек технологий
+* Node.js
+* Express.js
+* MongoDB
+* Mongoose
 ## Запуск проекта
 
 `npm run start` — запускает сервер   
 `npm run dev` — запускает сервер с hot-reload
+
+**Проектная работа-13**
+
+* [Ссылка на Пр-13 github](https://github.com/UlanBekboev/express-mesto-gha.git)
