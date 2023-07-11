@@ -1,6 +1,4 @@
 const User = require('../models/users');
-const BadRequestError = require('../validationErrors/BadRequestError');
-const NotFoundError = require('../validationErrors/NotFoundError');
 
 module.exports.createUser = (req, res) => {
   const { name, about, avatar } = req.body;
@@ -14,12 +12,14 @@ module.exports.createUser = (req, res) => {
     });
 };
 
-module.exports.getUsers = (req, res, next) => {
+module.exports.getUsers = (req, res) => {
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch(next);
+    .catch(() => {
+      res.status(400).send({ message: 'Переданы неверные данные.' });
+    });
 };
 
 module.exports.getUser = (req, res, next) => {
@@ -28,11 +28,18 @@ module.exports.getUser = (req, res, next) => {
   User.findById(id)
     .then((user) => {
       if (!user) {
-        return next(new NotFoundError('Пользователь не найден'));
+        res.status(404).send({ message: 'Переданы некоректные данные.' });
+      } else {
+        res.status(200).send(user);
       }
-      return res.status(200).send(user);
     })
-    .catch(next);
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Переданы некоректные данные.' });
+      } else {
+        next();
+      }
+    });
 };
 
 module.exports.updateAvatar = (req, res, next) => {
@@ -43,9 +50,10 @@ module.exports.updateAvatar = (req, res, next) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequestError('Неверная ссылка'));
+        res.status(400).send({ message: 'Неверная ссылка' });
+      } else {
+        next();
       }
-      return next(err);
     });
 };
 
@@ -59,8 +67,9 @@ module.exports.updateUser = (req, res, next) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError('Неверный тип данных.'));
+        res.status(400).send({ message: 'Неверный тип данных.' });
+      } else {
+        next();
       }
-      return next(err);
     });
 };
