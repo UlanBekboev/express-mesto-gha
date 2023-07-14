@@ -1,3 +1,7 @@
+const {
+  BAD_REQUEST_ERROR, OK_STATUS, CREATED_STATUS, INTERNAL_SERVER_ERROR, NOT_FOUND_ERROR,
+} = require('../validationErrors/errors');
+
 const User = require('../models/users');
 
 module.exports.createUser = (req, res) => {
@@ -5,10 +9,14 @@ module.exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => {
-      res.send({ data: user });
+      res.status(CREATED_STATUS).send({ data: user });
     })
-    .catch(() => {
-      res.status(400).send({ message: 'Переданы неверные данные.' });
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некоректные данные.' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'непредвиденная ошибка сервера' });
+      }
     });
 };
 
@@ -18,58 +26,59 @@ module.exports.getUsers = (req, res) => {
       res.send({ data: users });
     })
     .catch(() => {
-      res.status(400).send({ message: 'Переданы неверные данные.' });
+      res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы неверные данные.' });
     });
 };
 
-module.exports.getUser = (req, res, next) => {
+module.exports.getUser = (req, res) => {
   const { id } = req.params;
 
   User.findById(id)
     .then((user) => {
       if (!user) {
-        res.status(404).send({ message: 'Переданы некоректные данные.' });
+        res.status(NOT_FOUND_ERROR).send({ message: 'Переданы некоректные данные.' });
       } else {
-        res.status(200).send(user);
+        res.status(OK_STATUS).send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некоректные данные.' });
+        res.status(BAD_REQUEST_ERROR).send({ message: 'Переданы некоректные данные.' });
       } else {
-        next();
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'непредвиденная ошибка сервера' });
       }
     });
 };
 
-module.exports.updateAvatar = (req, res, next) => {
+module.exports.updateAvatar = (req, res) => {
   const { avatar } = req.body;
   User.findByIdAndUpdate(req.user._id,
     { avatar },
     { new: true, runValidators: true })
-    .then((user) => res.status(200).send(user))
+    .orFail(new Error('NotValidId'))
+    .then((user) => res.status(OK_STATUS).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Неверная ссылка' });
+        res.status(BAD_REQUEST_ERROR).send({ message: 'Неверная ссылка' });
       } else {
-        next();
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'непредвиденная ошибка сервера' });
       }
     });
 };
 
-module.exports.updateUser = (req, res, next) => {
+module.exports.updateUser = (req, res) => {
   const { name, about } = req.body;
   User.findByIdAndUpdate(
     req.user._id,
     { name, about },
     { new: true, runValidators: true },
   )
-    .then((user) => res.status(200).send(user))
+    .then((user) => res.status(OK_STATUS).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Неверный тип данных.' });
+        res.status(BAD_REQUEST_ERROR).send({ message: 'Неверный тип данных.' });
       } else {
-        next();
+        res.status(INTERNAL_SERVER_ERROR).send({ message: 'непредвиденная ошибка сервера' });
       }
     });
 };
