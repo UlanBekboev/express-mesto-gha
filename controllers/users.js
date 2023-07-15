@@ -55,10 +55,14 @@ module.exports.updateAvatar = (req, res) => {
   User.findByIdAndUpdate(req.user._id,
     { avatar },
     { new: true, runValidators: true })
-    // .orFail(new Error('NotValidId'))
-    .then((user) => res.status(OK_STATUS).send(user))
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND_ERROR).send({ message: 'Переданы некоректные данные.' });
+      } else {
+        res.status(OK_STATUS).send(user);
+      }
+    })
     .catch((err) => {
-    // if (err.message === 'NotValidId') {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR).send({ message: 'Неверная ссылка' });
       } else {
@@ -74,7 +78,13 @@ module.exports.updateUser = (req, res) => {
     { name, about },
     { new: true, runValidators: true },
   )
-    .then((user) => res.status(OK_STATUS).send(user))
+    .then((user) => {
+      if (!user) {
+        res.status(NOT_FOUND_ERROR).send({ message: 'Переданы некоректные данные.' });
+      } else {
+        res.status(OK_STATUS).send(user);
+      }
+    })
     .catch((err) => {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR).send({ message: 'Неверный тип данных.' });
