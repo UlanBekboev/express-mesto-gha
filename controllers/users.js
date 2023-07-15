@@ -55,9 +55,10 @@ module.exports.updateAvatar = (req, res) => {
   User.findByIdAndUpdate(req.user._id,
     { avatar },
     { new: true, runValidators: true })
-    .orFail(new Error('NotValidId'))
+    // .orFail(new Error('NotValidId'))
     .then((user) => res.status(OK_STATUS).send(user))
     .catch((err) => {
+    // if (err.message === 'NotValidId') {
       if (err.name === 'ValidationError') {
         res.status(BAD_REQUEST_ERROR).send({ message: 'Неверная ссылка' });
       } else {
