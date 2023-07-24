@@ -1,49 +1,51 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const NotFoundError = require('../errors/not-found-err');
-const { OK_STATUS } = require('../errors/status');
+const { OK_STATUS, CREATED_STATUS } = require('../errors/status');
 
 const User = require('../models/users');
 const BadRequestError = require('../errors/bad-request-err');
 const ConflictError = require('../errors/conflict-err');
 
-module.exports.createUser = (req, res, next) => {
+module.exports.createUser = async (req, res, next) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
     next(new BadRequestError('Неправильный логин или пароль.'));
+    return;
   }
-  return User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        next(new ConflictError(`Пользователь с ${email} уже существует.`));
-      }
-      return bcrypt.hash(password, 10);
-    })
-    .then((hash) => {
-      User.create({
-        email,
-        password: hash,
-        name: req.body.name,
-        about: req.body.about,
-        avatar: req.body.avatar,
-      });
-    })
-    .then((user) => res.status(200).send({
-      name: user.name,
-      about: user.about,
-      avatar: user.avatar,
-      _id: user._id,
-      email: user.email,
-    }))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(
-          new BadRequestError('Неверные данные о пользователе или неверная ссылка на аватар.'),
-        );
-      }
-      return next(err);
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (user) {
+      next(new ConflictError(`Пользователь с ${email} уже существует.`));
+      return;
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const createdUser = await User.create({
+      email,
+      password: hash,
+      name: req.body.name,
+      about: req.body.about,
+      avatar: req.body.avatar,
     });
+
+    res.status(CREATED_STATUS).send({
+      name: createdUser.name,
+      about: createdUser.about,
+      avatar: createdUser.avatar,
+      _id: createdUser._id,
+      email: createdUser.email,
+    });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      next(new BadRequestError('Неверные данные о пользователе или неверная ссылка на аватар.'));
+    } else {
+      next(err);
+    }
+  }
 };
 
 module.exports.login = (req, res, next) => {

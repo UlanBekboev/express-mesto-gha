@@ -25,9 +25,9 @@ module.exports.createCard = (req, res, next) => {
 };
 
 module.exports.deleteCard = (req, res, next) => {
-  const { cardId } = req.params;
+  const { id } = req.params;
   const { _id } = req.user;
-  Card.findById(cardId)
+  Card.findById(id)
     // eslint-disable-next-line consistent-return
     .then((card) => {
       if (!card) {
@@ -36,7 +36,7 @@ module.exports.deleteCard = (req, res, next) => {
       if (card.owner.valueOf() !== _id) {
         throw new ForbiddenError('Нельзя удалить чужую карточку!');
       }
-      Card.findByIdAndRemove(cardId)
+      Card.findByIdAndRemove(id)
         .then((deletedCard) => res.status(OK_STATUS).send(deletedCard))
         .catch(next);
     })
@@ -45,7 +45,7 @@ module.exports.deleteCard = (req, res, next) => {
 
 module.exports.likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
-    req.params.cardId,
+    req.params.id,
     { $addToSet: { likes: req.user._id } },
     { new: true },
   )
@@ -60,7 +60,7 @@ module.exports.likeCard = (req, res, next) => {
 
 module.exports.dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
-    req.params.cardId,
+    req.params.id,
     { $pull: { likes: req.user._id } },
     { new: true },
   )
