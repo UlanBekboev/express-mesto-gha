@@ -23,24 +23,25 @@ module.exports.createCard = (req, res, next) => {
       return next(err);
     });
 };
-
-module.exports.deleteCard = (req, res, next) => {
+// eslint-disable-next-line
+module.exports.deleteCard = async (req, res, next) => {
   const { id } = req.params;
   const { _id } = req.user;
-  Card.findById(id)
-    // eslint-disable-next-line consistent-return
-    .then((card) => {
-      if (!card) {
-        throw new NotFoundError('Карточка не найдена.');
-      }
-      if (card.owner.valueOf() !== _id) {
-        throw new ForbiddenError('Нельзя удалить чужую карточку!');
-      }
-      Card.findByIdAndRemove(id)
-        .then((deletedCard) => res.status(OK_STATUS).send(deletedCard))
-        .catch(next);
-    })
-    .catch(next);
+
+  try {
+    const card = await Card.findById(id);
+    if (!card) {
+      return next(new NotFoundError('Карточка не найдена.'));
+    }
+    if (card.owner.valueOf() !== _id) {
+      return next(new ForbiddenError('Нельзя удалить чужую карточку!'));
+    }
+    await card.deleteOne({ _id: id });
+
+    res.status(OK_STATUS).send({ message: 'Карточка успешно удалена.' });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports.likeCard = (req, res, next) => {

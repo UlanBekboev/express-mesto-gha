@@ -10,11 +10,6 @@ const ConflictError = require('../errors/conflict-err');
 module.exports.createUser = async (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    next(new BadRequestError('Неправильный логин или пароль.'));
-    return;
-  }
-
   try {
     const user = await User.findOne({ email });
 
@@ -50,11 +45,9 @@ module.exports.createUser = async (req, res, next) => {
 
 module.exports.login = (req, res, next) => {
   const { email, password } = req.body;
-  User.findUserByCredentials(email, password)
+
+  return User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user || !password) {
-        return next(new BadRequestError('Неверный email или пароль.'));
-      }
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', {
         expiresIn: '7d',
       });
@@ -75,10 +68,9 @@ module.exports.getUser = (req, res, next) => {
   User.findById(id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Пользователь не найден');
-      } else {
-        res.status(OK_STATUS).send(user);
+        return next(new NotFoundError('Пользователь не найден'));
       }
+      return res.status(OK_STATUS).send(user);
     })
     .catch(next);
 };
@@ -93,7 +85,7 @@ module.exports.updateAvatar = (req, res, next) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Неверная ссылка');
+        return next(new BadRequestError('Неверная ссылка'));
       }
       return next(err);
     });
@@ -109,7 +101,7 @@ module.exports.updateUser = (req, res, next) => {
     .then((user) => res.status(OK_STATUS).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        throw new BadRequestError('Неверный тип данных.');
+        return next(new BadRequestError('Неверный тип данных.'));
       }
       return next(err);
     });
@@ -121,7 +113,7 @@ module.exports.getProfile = (req, res, next) => {
   User.findById(_id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError('Нет пользователя с таким id');
+        return next(new NotFoundError('Нет пользователя с таким id'));
       }
       return res.status(OK_STATUS).send(user);
     })
