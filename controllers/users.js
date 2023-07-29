@@ -8,23 +8,18 @@ const BadRequestError = require('../errors/bad-request-err');
 const ConflictError = require('../errors/conflict-err');
 
 module.exports.createUser = async (req, res, next) => {
-  const { email, password } = req.body;
+  const {
+    email, password, name, about, avatar,
+  } = req.body;
 
   try {
-    const user = await User.findOne({ email });
-
-    if (user) {
-      next(new ConflictError(`Пользователь с ${email} уже существует.`));
-      return;
-    }
-
     const hash = await bcrypt.hash(password, 10);
     const createdUser = await User.create({
       email,
       password: hash,
-      name: req.body.name,
-      about: req.body.about,
-      avatar: req.body.avatar,
+      name,
+      about,
+      avatar,
     });
 
     res.status(CREATED_STATUS).send({
@@ -35,8 +30,8 @@ module.exports.createUser = async (req, res, next) => {
       email: createdUser.email,
     });
   } catch (err) {
-    if (err.name === 'ValidationError') {
-      next(new BadRequestError('Неверные данные о пользователе или неверная ссылка на аватар.'));
+    if (err.code === 11000) {
+      next(new ConflictError(`Пользователь с ${email} уже существует.`));
     } else {
       next(err);
     }

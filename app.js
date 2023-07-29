@@ -7,16 +7,13 @@ const NotFoundError = require('./errors/not-found-err');
 const BadRequestError = require('./errors/bad-request-err');
 const auth = require('./middlewares/auth');
 const { login, createUser } = require('./controllers/users');
-const config = require('./config');
 const rootRouter = require('./routes/index');
-// eslint-disable-next-line
-const port = config.port;
-const DB_URL = config.databaseUrl;
+const { SERVER_PORT, DB } = require('./utils/config');
 
 const app = express();
 app.use(helmet());
 
-mongoose.connect(DB_URL, {
+mongoose.connect(DB, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -67,7 +64,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => {
+app.listen(SERVER_PORT, () => {
   // eslint-disable-next-line no-console
-  console.log(`App listening on port ${port}`);
+  console.log(`App listening on port ${SERVER_PORT}`);
 });
